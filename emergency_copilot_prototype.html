@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Emergency Copilot — Prototype</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{--wf:#003366;--accent:#1f8ef1;--card:#fff;--muted:#666}
+  body{font-family:Inter,Arial,Helvetica,sans-serif;background:#f3f6fb;margin:0;color:#111}
+  header{background:linear-gradient(90deg,#003366 0%,#00509e 100%);color:#fff;padding:18px}
+  .container{max-width:980px;margin:20px auto;padding:12px}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .card{background:var(--card);border-radius:10px;padding:14px;box-shadow:0 6px 18px rgba(10,20,40,0.06)}
+  .wide{flex:1 1 680px}
+  .side{flex:1 1 260px}
+  button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .muted{color:var(--muted);font-size:13px}
+  input,select,textarea{width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid #e0e6ef}
+  label{font-weight:600;font-size:13px}
+  .nav{display:flex;gap:8px;margin-bottom:12px}
+  .nav button{background:transparent;color:#000000;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.12)}
+  .activeTab{background:#fff;color:var(--wf);font-weight:700;border:0}
+  .chat{height:280px;overflow:auto;border-radius:8px;padding:8px;border:1px solid #e6eefb;background:#fbfdff}
+  .msg.user{text-align:right}
+  .msg.bot{text-align:left}
+  .msg p{margin:4px 0;padding:8px;border-radius:8px;display:inline-block;max-width:80%}
+  .msg.user p{background:#e8f3ff;color:#003366}
+  .msg.bot p{background:#f0f4f8;color:#123}
+  .small{font-size:13px;color:var(--muted)}
+  canvas{background:#fff;border-radius:8px}
+  .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:#eafaf1;color:#136f3d;font-weight:600}
+  .center{display:flex;align-items:center;gap:8px}
+  .linklike{background:none;border:0;color:var(--accent);cursor:pointer;padding:0}
+  footer{margin-top:20px;text-align:center;color:var(--muted);font-size:13px}
+  @media(max-width:880px){.wide,.side{flex:1 1 100%}}
+</style>
+</head>
+<body>
+
+<header>
+  <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <h2 style="margin:0">Wells Fargo — Emergency Copilot (Prototype)</h2>
+      <div class="small">Fast, fair emergency access — demo prototype</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div id="signedName" class="small">Not signed in</div>
+      <button id="signInBtn">Sign in (Demo)</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="nav">
+    <button class="activeTab" data-tab="home">Home</button>
+    <button data-tab="predictive">Predictive Alerts</button>
+    <button data-tab="history">Loan History</button>
+  </div>
+
+  <div id="tabs">
+    <!-- HOME -->
+    <div id="home" class="tabContent">
+      <div class="row">
+        <div class="card wide">
+          <h3>Emergency Loan — Start</h3>
+          <p class="muted">Choose how you'd like help: let the Copilot guide you, or manually apply.</p>
+
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button id="chatbotBtn">💬 Chatbot Guide</button>
+            <button id="manualBtn">📝 Manual Apply</button>
+          </div>
+
+          <p class="small muted" style="margin-top:6px;">
+  Note: The lists of occupations and emergencies are not exhaustive — this is a prototype.
+</p>
+
+
+          <hr style="margin:14px 0">
+
+          <div id="flowArea">
+            <p class="small muted">Pick an option to begin.</p>
+          </div>
+        </div>
+
+        <div class="card side">
+  <h4>Predictive Alerts</h4>
+  <p class="small">
+    We also have a prediction feature — if you go to <strong>Profile</strong>, it will tell you if there’s an upcoming emergency.  
+    You can then mitigate it using different recommendations.  
+    Click the Profile button below to go to the predictions demo.
+  </p>
+  <div style="margin-top:10px">
+    <button id="goProfile">Go to Profile (Predictions)</button>
+  </div>
+</div>
+      </div>
+    </div>
+
+   
+<div id="predictive" class="tabContent" style="display:none">
+  <div class="card wide">
+    <h3>Predictive Alerts — Demo</h3>
+    <div id="predictiveList" class="small muted">
+      Click “Run Simulation” to see a demo of how Wells Fargo can predict potential financial emergencies.
+    </div>
+    <div style="margin-top:10px; display:flex; gap:8px">
+      <button id="runPredict">Run Simulation</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- HISTORY -->
+    <div id="history" class="tabContent" style="display:none">
+      <div class="card">
+        <h3>Your Demo Loan History</h3>
+        <div id="historyList" class="small muted">No loans yet.</div>
+      </div>
+    </div>
+  </div>  
+
+  <footer>
+    <div>Prototype — simulated data only. For demo & presentation purposes.</div>
+  </footer>
+</div>
+
+<!-- Advisor modal (simulated) -->
+<div id="advisorModal" style="display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
+  <div class="card" style="width:560px;margin:auto">
+    <h3>Advisor Connect — Simulated</h3>
+    <div class="chat" id="advisorChat"></div>
+    <input id="advisorInput" placeholder="Type a question for the advisor" />
+    <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
+      <button id="closeAdvisor">Close</button>
+      <button id="sendAdvisor">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* -------------------------
+  MOCK DATA & UTILITY CODE
+   - This is all client-side for the demo
+--------------------------*/
+const demoUser = {name: "Demo User", id: "demo-1"};
+let loanHistory = JSON.parse(localStorage.getItem("demoLoans") || "[]");
+
+// Mock transactions (recent month) and recurring inflows/outflows
+let mockProfile = {
+  transactions: [200, 150, 300, 100, 120], // expenses
+  monthlyIncome: 2200,
+  rent: 900,
+  subscriptions: 60,
+  upcomingBills: [{name:"Car repair estimate", amount:450, date:"soon"}] // for predictive
+};
+
+// UI helpers
+const setSignedIn = (user) => {
+  document.getElementById("signedName").innerText = user ? user.name : "Not signed in";
+};
+
+const saveLoan = (loan) => {
+  loanHistory.unshift(loan);
+  localStorage.setItem("demoLoans", JSON.stringify(loanHistory));
+  renderHistory();
+};
+
+/* -------------------------
+  NAVIGATION & TABS
+--------------------------*/
+const tabs = Array.from(document.querySelectorAll('.nav button'));
+tabs.forEach(btn=>{
+  btn.addEventListener('click', ()=> {
+    // set active
+    tabs.forEach(b=>b.classList.remove('activeTab'));
+    btn.classList.add('activeTab');
+    // show tab
+    const target = btn.dataset.tab;
+    document.querySelectorAll('.tabContent').forEach(t=>t.style.display='none');
+    document.getElementById(target).style.display='block';
+  });
+});
+
+/* -------------------------
+  SIGN IN DEMO
+--------------------------*/
+document.getElementById('signInBtn').addEventListener('click', ()=>{
+  setSignedIn(demoUser);
+  alert('Signed in as Demo User (simulated).');
+});
+
+/* -------------------------
+  HOME FLOW AREA: Chatbot or Manual
+--------------------------*/
+const flowArea = document.getElementById('flowArea');
+
+document.getElementById('chatbotBtn').addEventListener('click', ()=> renderChatbotFlow());
+document.getElementById('manualBtn').addEventListener('click', ()=> renderManualApply());
+
+/* -------------------------
+  RENDER: LOAN HISTORY
+--------------------------*/
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  if(loanHistory.length===0){ list.innerHTML = '<div class="muted small">No loans yet.</div>'; return; }
+  list.innerHTML = loanHistory.map(l => `<div style="padding:8px;border-bottom:1px dashed #eee">
+    <div><strong>$${l.amount}</strong> — ${l.type} — <span class="small">${l.status}</span></div>
+    <div class="small muted">Repay ${l.weeks} weeks • ${l.date}</div>
+  </div>`).join('');
+}
+renderHistory();
+
+/* -------------------------
+  CORE: Loan suggestion calculator (simulated "AI")
+  - Uses: category, emergency type, profile transactions, income, subscriptions
+  - Returns suggested amount, weeks, monthly payment, reason tags
+--------------------------*/
+function computeSuggestedLoan({category, emergency, requestedAmount=null}) {
+  // base on needs and category weights
+  const avgExpense = mockProfile.transactions.reduce((a,b)=>a+b,0)/mockProfile.transactions.length;
+  let base = Math.round(avgExpense * 0.8); // default
+  // category modifiers (people left out)
+  const catBoost = { "gig-worker":1.2, "renter":1.1, "student":0.6, "single-parent":1.4, "other":1.0 };
+  base = Math.round(base * (catBoost[category] || 1.0));
+
+  // emergency adjustment
+  if(emergency==="car-repair") base += 300;
+  if(emergency==="rent") base += Math.min(1200, mockProfile.rent * 1.0);
+  if(emergency==="paycheck") base += Math.round(mockProfile.monthlyIncome * 0.35);
+  if(emergency==="medical") base += 500;
+
+  // If user requested a specific amount, respect but cap
+  if(requestedAmount){
+    base = Math.min(Math.max(requestedAmount, 50), 2000);
+  }
+
+  // Decide repayment duration: lower income or high base -> slightly longer
+  let weeks = base > 800 ? 12 : (base > 400 ? 8 : 4);
+  // payment schedule weekly amount
+  const weekly = Math.round(base / weeks);
+
+  // Approval likelihood heuristic
+  const recentSpending = mockProfile.transactions.reduce((a,b)=>a+b,0);
+  let approvalScore = Math.min(99, Math.round((mockProfile.monthlyIncome / (avgExpense+1)) * 15));
+  if(category==="student") approvalScore = Math.min(95, approvalScore + 5);
+  if(category==="single-parent") approvalScore = Math.min(98, approvalScore + 3);
+
+  // suggestions to avoid repeat cycle
+  const helperSuggestions = [];
+  if(mockProfile.monthlyIncome < 1500) helperSuggestions.push("Consider a smaller loan or income smoothing.");
+  if(mockProfile.subscriptions > 100) helperSuggestions.push("Review subscriptions to free up cash.");
+
+  return {
+    amount: base,
+    weeks,
+    weekly,
+    approvalScore,
+    helperSuggestions,
+    reason: `Calculated from avg expense ${Math.round(avgExpense)} and category adjustments`
+  };
+}
+
+/* -------------------------
+  CHATBOT FLOW (step-by-step Q&A + verification)
+--------------------------*/
+function renderChatbotFlow(){
+  flowArea.innerHTML = '';
+  const container = document.createElement('div');
+  container.className = 'card';
+  container.innerHTML = `
+    <h4>Copilot Chat</h4>
+    <div class="chat" id="chatFlow"></div>
+    <input id="chatInput" placeholder="Type your answer here" />
+    <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
+      <button id="sendChat">Send</button>
+      <button id="cancelChat" class="linklike">Cancel</button>
+    </div>
+  `;
+  flowArea.appendChild(container);
+
+  const chatDiv = container.querySelector('#chatFlow');
+  const input = container.querySelector('#chatInput');
+  let step = 0;
+  let userData = {};
+
+const questions = [
+  {
+    q: "Who are you?",
+    key: "category",
+    type: "select",
+    options: [
+      {label: "Gig Worker", value: "gig-worker"},
+      {label: "Renter", value: "renter"},
+      {label: "Student", value: "student"},
+      {label: "Single Parent", value: "single-parent"},
+      {label: "Other", value: "other"}
+    ]
+  },
+  {
+    q: "What emergency?",
+    key: "emergency",
+    type: "select",
+    options: [
+      {label: "Car repair", value: "car-repair"},
+      {label: "Rent due", value: "rent"},
+      {label: "Paycheck delayed", value: "paycheck"},
+      {label: "Medical bill", value: "medical"},
+      {label: "Other", value: "other"}
+    ]
+  },
+  {
+    q: "If you need a specific amount, enter it (optional)",
+    key: "requestedAmount",
+    type: "number"
+  }
+];
+
+function showQuestion(){
+  const curr = questions[step];
+  chatDiv.innerHTML += `<div class="msg bot"><p>Copilot: ${curr.q}</p></div>`;
+  chatDiv.scrollTop = chatDiv.scrollHeight;
+  const inputContainer = container.querySelector('#chatInput').parentNode;
+
+  if(curr.type==="select"){
+    container.querySelector('#chatInput').outerHTML = `
+      <select id="chatInput">
+        ${curr.options.map(o=>`<option value="${o.value}">${o.label}</option>`).join('')}
+      </select>
+    `;
+  } else {
+    container.querySelector('#chatInput').outerHTML = `<input id="chatInput" placeholder="Your answer" type="${curr.type}">`;
+  }
+}
+
+
+  container.querySelector('#sendChat').addEventListener('click', ()=> {
+    const input = container.querySelector('#chatInput');
+    let val = input.value;
+    if(!val && questions[step].type!=="number") return; // skip empty
+    if(questions[step].type==="number") val = val ? parseInt(val) : null;
+
+    userData[questions[step].key] = val;
+    chatDiv.innerHTML += `<div class="msg user"><p>${val || "(none)"}</p></div>`;
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+
+    step++;
+    if(step < questions.length){
+      showQuestion();
+    } else {
+      // All answers collected
+      const suggestion = computeSuggestedLoan({
+        category: userData.category,
+        emergency: userData.emergency,
+        requestedAmount: userData.requestedAmount
+      });
+
+      chatDiv.innerHTML += `<div class="msg bot"><p>Copilot: Sending your request for verification...</p></div>`;
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+
+      setTimeout(()=>{
+        chatDiv.innerHTML += `<div class="msg bot"><p>Advisor: Verification approved! Your loan is ready.</p></div>`;
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+
+        // create loan object
+        const loan = {
+          id: 'L'+Date.now(),
+          amount: suggestion.amount,
+          weeks: suggestion.weeks,
+          weekly: suggestion.weekly,
+          category: userData.category,
+          emergency: userData.emergency,
+          status: 'Approved — funds disbursed (simulated)',
+          date: (new Date()).toLocaleString()
+        };
+        saveLoan(loan);
+        // show dashboard
+        setTimeout(()=> renderLoanDashboard(loan), 2000);
+      }, 1500);
+    }
+  });
+
+  showQuestion();
+}
+
+
+/* -------------------------
+  MANUAL APPLY (form)
+--------------------------*/
+function renderManualApply(){
+  flowArea.innerHTML = '';
+  const card = document.createElement('div');
+  card.className='card';
+  card.innerHTML = `
+    <h4>Manual Loan Apply</h4>
+    <div class="small muted">Fill the form — Copilot will calculate a recommended plan, then you request verification.</div>
+
+    <label style="margin-top:8px">Category</label>
+    <select id="mCat"><option value="gig-worker">Gig Worker</option><option value="renter">Renter</option><option value="student">Student</option><option value="single-parent">Single Parent</option><option value="other">Other</option></select>
+
+    <label style="margin-top:8px">Emergency type</label>
+    <select id="mEmergy"><option value="car-repair">Car repair</option><option value="rent">Rent</option><option value="paycheck">Paycheck delayed</option><option value="medical">Medical</option><option value="other">Other</option></select>
+
+    <label style="margin-top:8px">Requested amount</label>
+    <input id="mReq" type="number" placeholder="Amount you need">
+
+    <div style="margin-top:10px"><button id="mSubmit">Calculate & Request</button></div>
+    <div id="mResult" style="margin-top:10px"></div>
+  `;
+  flowArea.appendChild(card);
+
+  card.querySelector('#mSubmit').addEventListener('click', ()=>{
+    const category = card.querySelector('#mCat').value;
+    const emergency = card.querySelector('#mEmergy').value;
+    const req = parseInt(card.querySelector('#mReq').value) || null;
+    const suggestion = computeSuggestedLoan({category, emergency, requestedAmount:req});
+
+    const loan = {
+      id: 'L' + Date.now(),
+      amount: suggestion.amount,
+      weeks: suggestion.weeks,
+      weekly: suggestion.weekly,
+      category, emergency, status: 'Pending advisor verification', date: (new Date()).toLocaleString()
+    };
+    saveLoan(loan);
+    card.querySelector('#mResult').innerHTML = `<div class="card small">Requested $${loan.amount}. Waiting for human verification. <button id="viewLoan">View</button></div>`;
+    card.querySelector('#mResult').querySelector('#viewLoan').addEventListener('click', ()=> renderLoanPendingVerification(loan));
+  });
+}
+
+/* -------------------------
+  SHOW: loan pending verification & allow advisor verify (simulate)
+--------------------------*/
+function renderLoanPendingVerification(loan){
+  flowArea.innerHTML = '';
+  const card = document.createElement('div');
+  card.className='card';
+  card.innerHTML = `
+    <h4>Loan Request</h4>
+    <div><strong>Amount:</strong> $${loan.amount}</div>
+    <div><strong>Emergency:</strong> ${loan.emergency}</div>
+    <div><strong>Category:</strong> ${loan.category}</div>
+    <div><strong>Status:</strong> <span id="loanStatus">${loan.status}</span></div>
+    <div style="margin-top:8px" class="small muted">Copilot did the calculations. A human advisor must verify for final approval (simulated).</div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button id="simulateVerify">Simulate Advisor Approve</button>
+      <button id="connectAdvisor" class="linklike">Connect to Advisor</button>
+    </div>
+  `;
+  flowArea.appendChild(card);
+
+  card.querySelector('#simulateVerify').addEventListener('click', ()=> {
+    loan.status = 'Verifying…';
+    document.getElementById('loanStatus').innerText = loan.status;
+
+    // Wait 5 seconds to simulate advisor approval
+    setTimeout(() => {
+      loan.status = 'Approved — funds disbursed (simulated)';
+      document.getElementById('loanStatus').innerText = loan.status;
+
+      // Update saved loan
+      loanHistory = loanHistory.map(l => l.id === loan.id ? loan : l);
+      localStorage.setItem('demoLoans', JSON.stringify(loanHistory));
+
+      // Show repayment dashboard after 1 more short delay for UX
+      setTimeout(()=> renderLoanDashboard(loan), 500);
+    }, 5000);
+  });
+
+  card.querySelector('#connectAdvisor').addEventListener('click', ()=> showAdvisorModal(`Hi, I'd like to review loan ${loan.id}`));
+}
+
+/* -------------------------
+  DASHBOARD: repayment chart with axes, labels, and title
+--------------------------*/
+function renderLoanDashboard(loan){
+  flowArea.innerHTML = '';
+  const container = document.createElement('div');
+  container.className='card';
+  container.innerHTML = `
+    <h4>Repayment Dashboard</h4>
+    <div class="small muted">Here’s your repayment schedule and financial overview (simulated)</div>
+    <div style="margin-top:10px">
+      <div><strong>Loan:</strong> $${loan.amount}</div>
+      <div><strong>Duration:</strong> ${loan.weeks} weeks</div>
+    </div>
+    <div style="margin-top:12px">
+      <canvas id="repayChart" width="700" height="300"></canvas>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+      <button id="repayNow">Mark as Repaid (simulate)</button>
+      <div style="margin-left:auto"><span class="badge">On-time performer</span></div>
+    </div>
+  `;
+  flowArea.appendChild(container);
+
+  // draw chart
+  const c = container.querySelector('#repayChart');
+  drawRepaymentChartWithAxes(c, loan);
+
+container.querySelector('#repayNow').addEventListener('click', ()=> {
+  alert('Simulated: Loan marked as repaid. You earned the "Emergency Ready" badge!');
+  loan.status = 'Repaid';
+  saveLoan(loan);
+
+  flowArea.innerHTML = `
+    <div class="card">
+      <h4>🎉 Loan Repaid</h4>
+      <p class="small muted">
+        You earned the "Emergency Ready" badge — consider building a small buffer.
+      </p>
+      <h5 style="margin-top:15px">How to Rebuild & Stay Prepared</h5>
+      <p class="small muted">
+        Here there will be personalized options. When you click on one of these, 
+        you’ll get insights tailored to your income and data.
+      </p>
+      <ul style="margin-top:8px; list-style:none; padding:0">
+        <li>
+          <button class="option-btn">💰 Recover: Set aside 5–10% of income into an emergency fund</button>
+        </li>
+        <li style="margin-top:6px">
+          <button class="option-btn">📊 Rebuild: Track expenses weekly to spot patterns</button>
+        </li>
+        <li style="margin-top:6px">
+          <button class="option-btn">🔔 Avoid falling again: Use prediction alerts in the Profile tab</button>
+        </li>
+      </ul>
+    </div>`;
+
+  // later you can attach event listeners to .option-btn for personalized insights
+});
+
+
+}
+
+function drawRepaymentChartWithAxes(canvas, loan){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const weeks = loan.weeks;
+  const basePayment = loan.amount / weeks;
+  const barW = Math.min(60, Math.floor(canvas.width / (weeks*1.5)));
+  const gap = 20;
+  const topPadding = 60;
+  const bottomPadding = 50;
+  const leftPadding = 60;
+  const chartHeight = canvas.height - topPadding - bottomPadding;
+
+  // simulate variation for each week
+  const payments = Array.from({length: weeks}, ()=> Math.round(basePayment * (0.7 + Math.random() * 0.6)));
+
+  // find max value for scaling
+  const maxVal = Math.max(...payments) * 1.2;
+
+  // draw axes
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  // Y-axis
+  ctx.moveTo(leftPadding, topPadding);
+  ctx.lineTo(leftPadding, canvas.height - bottomPadding);
+  // X-axis
+  ctx.lineTo(canvas.width - 20, canvas.height - bottomPadding);
+  ctx.stroke();
+
+  // draw Y-axis labels
+  ctx.fillStyle = '#333';
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  const ySteps = 5;
+  for(let i=0;i<=ySteps;i++){
+    const val = Math.round((maxVal/ySteps)*i);
+    const y = canvas.height - bottomPadding - (chartHeight * i / ySteps);
+    ctx.fillText(`$${val}`, leftPadding - 5, y);
+    // optional grid line
+    ctx.strokeStyle = '#eee';
+    ctx.beginPath();
+    ctx.moveTo(leftPadding, y);
+    ctx.lineTo(canvas.width - 20, y);
+    ctx.stroke();
+  }
+
+  // draw bars
+  payments.forEach((p,i)=>{
+    const x = leftPadding + gap + i*(barW + gap);
+    const h = (p / maxVal) * chartHeight;
+    const y = canvas.height - bottomPadding - h;
+    ctx.fillStyle = '#1f8ef1';
+    ctx.fillRect(x, y, barW, h);
+    // data label
+    ctx.fillStyle = '#000';
+    ctx.textAlign = 'center';
+    ctx.fillText(`$${p}`, x + barW/2, y - 10);
+    // X-axis label
+    ctx.fillText(`W${i+1}`, x + barW/2, canvas.height - bottomPadding + 15);
+  });
+
+  // chart title
+  ctx.textAlign = 'center';
+  ctx.font = '16px Arial bold';
+  ctx.fillText('Repayment Schedule According to Income and Pending', canvas.width/2, 30);
+
+  // axis titles
+  ctx.font = '14px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Weeks', (canvas.width + leftPadding)/2, canvas.height - 10); // X-axis title
+
+  ctx.save();
+  ctx.translate(20, canvas.height/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center';
+  ctx.fillText('Amount ($)', 0, 0); // Y-axis title
+  ctx.restore();
+}
+
+
+
+/* -------------------------
+  ADVISOR MODAL (simulated chat)
+--------------------------*/
+function showAdvisorModal(initial){
+  const modal = document.getElementById('advisorModal');
+  const chat = document.getElementById('advisorChat');
+  modal.style.display = 'flex';
+  chat.innerHTML = '';
+  const systemMsg = initial || 'Hi, I need help with my loan';
+  chat.innerHTML += `<div class="msg bot"><p>Advisor: ${systemMsg}</p></div>`;
+  document.getElementById('advisorInput').value = '';
+}
+
+document.getElementById('closeAdvisor').addEventListener('click', ()=> {
+  document.getElementById('advisorModal').style.display = 'none';
+});
+
+document.getElementById('sendAdvisor').addEventListener('click', ()=> {
+  const txt = document.getElementById('advisorInput').value.trim();
+  if(!txt) return;
+  const chat = document.getElementById('advisorChat');
+  chat.innerHTML += `<div class="msg user"><p>You: ${txt}</p></div>`;
+  document.getElementById('advisorInput').value = '';
+  // Simulate advisor reply
+  setTimeout(()=> {
+    chat.innerHTML += `<div class="msg bot"><p>Advisor: Thanks — I recommend accepting the suggested plan and setting up auto-pay to build credit.</p></div>`;
+    chat.scrollTop = chat.scrollHeight;
+  }, 800);
+});
+
+
+document.getElementById('goProfile').addEventListener('click', () => {
+  // Hide all tabs
+  document.querySelectorAll('.tabContent').forEach(t => t.style.display = 'none');
+  // Remove active from all nav buttons
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('activeTab'));
+  // Show predictive tab
+  document.getElementById('predictive').style.display = 'block';
+  // Activate predictive tab button
+  const predictiveBtn = document.querySelector('.nav button[data-tab="predictive"]');
+  if (predictiveBtn) predictiveBtn.classList.add('activeTab');
+
+  // Populate predictiveList with the full demo explanation note
+  document.getElementById('predictiveList').innerHTML = `
+    <div class="small" style="margin-bottom:10px">
+      <strong>Demo: How Wells Fargo Can Predict Emergencies</strong><br>
+      This shows what data banks already have and how AI/ML can predict financial fragility.
+    </div>
+    <div class="small" style="margin-bottom:8px">
+      <strong>What Data Wells Fargo Already Has:</strong>
+      <ul>
+        <li>Income inflows: paychecks, gig payments, stipends, benefits</li>
+        <li>Frequency, stability, seasonality (weekly, bi-weekly, monthly)</li>
+        <li>Outflows: rent, utilities, subscriptions, loans, unusual spikes (car repair, medical)</li>
+        <li>Account balance trends: average, minimum, overdrafts</li>
+        <li>Optional external signals: payroll platforms, insurance, BNPL, credit bureau info</li>
+      </ul>
+    </div>
+    <div class="small" style="margin-bottom:8px">
+      <strong>🧠 How AI/ML Can Predict Emergencies:</strong>
+      <ul>
+        <li>Income Volatility Model: predicts delayed/missed paychecks</li>
+        <li>Expense Pressure Model: identifies cash gaps from upcoming bills</li>
+        <li>Balance Buffer Monitoring: flags low balances < $100 or <1 week of expenses</li>
+        <li>Overdraft / Decline Early Warning: forecasts next risk points</li>
+        <li>Seasonal / Recurring Stress: detects spikes (tuition, holidays, etc.)</li>
+      </ul>
+    </div>
+    <div class="small" style="margin-bottom:8px">
+      <strong>⚡ Example Prediction Alerts:</strong>
+      <ul>
+        <li>Alert: Cash Flow Gap — account may go below $50 next Thursday (rent $1,200 due before paycheck). Options: apply for emergency loan / adjust autopay / set aside $200.</li>
+        <li>Alert: Income Instability — last 3 gig payments came 5–7 days late. Consider setting aside $75.</li>
+        <li>Alert: High Expense Month Ahead — average December spending 40% higher. Plan to save $100 extra.</li>
+      </ul>
+    </div>
+    <div class="small muted">Click "Run Simulation" below to see how it works.</div>
+  `;
+
+  // Scroll into view
+  document.getElementById('predictive').scrollIntoView({ behavior: 'smooth' });
+});
+
+
+
+/* -------------------------
+  PREDICTIVE ALERTS
+  - Runs a simple simulation to detect "paycheck delayed" or high upcoming bills
+--------------------------*/
+document.getElementById('runPredict').addEventListener('click', () => {
+  const list = document.getElementById('predictiveList');
+
+  const alerts = [
+    {
+      title: "Cash Flow Gap",
+      msg: "We predict your account may go below $50 next Thursday, since rent ($1,200) is due before your paycheck arrives.",
+      options: [
+        { text: "Apply for an emergency loan", action: ()=> alert("Simulated: Open loan application") },
+        { text: "Adjust autopay date", action: ()=> alert("Simulated: Autopay adjustment") },
+        { text: "Set aside $200 now", action: ()=> alert("Simulated: Add to savings") }
+      ]
+    },
+    {
+      title: "Income Instability",
+      msg: "Your last 3 gig payments came 5–7 days late. Consider setting aside $75 to cover potential delays.",
+      options: [
+        { text: "Set aside $75", action: ()=> alert("Simulated: Add to savings") },
+        { text: "Track income schedule", action: ()=> alert("Simulated: Track income") }
+      ]
+    },
+    {
+      title: "High Expense Month Ahead",
+      msg: "Your average December spending is 40% higher than usual. Plan to save $100 extra this month.",
+      options: [
+        { text: "Set aside $100", action: ()=> alert("Simulated: Add to savings") },
+        { text: "Review last year's expenses", action: ()=> alert("Simulated: Expense review") }
+      ]
+    }
+  ];
+
+  // pick one randomly
+  const alertItem = alerts[Math.floor(Math.random() * alerts.length)];
+
+  // build HTML
+  list.innerHTML = `
+    <div class="small" style="margin-bottom:10px">
+      <strong>Demo Prediction Alert:</strong> <em>${alertItem.title}</em>
+    </div>
+    <div class="small" style="margin-bottom:8px">${alertItem.msg}</div>
+    <div style="margin-top:6px; display:flex; flex-direction: column; gap:6px;">
+      ${alertItem.options.map((o,i) => `<button class="option-btn" id="alertBtn${i}">${o.text}</button>`).join('')}
+    </div>
+    <div class="small muted" style="margin-top:6px;">This is a simulated demo — no real prediction is being made.</div>
+  `;
+
+  // attach button actions
+  alertItem.options.forEach((o,i)=>{
+    document.getElementById(`alertBtn${i}`).addEventListener('click', o.action);
+  });
+});
+
+/* -------------------------
+  INIT
+--------------------------*/
+setSignedIn(null);
+// initial predictive list blank
+document.getElementById('predictiveList').innerHTML = '<div class="small muted">Run the prediction simulation to see alerts.</div>';
+
+</script>
+
+</body>
+</html>
