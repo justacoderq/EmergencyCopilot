@@ -81,4 +81,4 @@ The prototype is entirely **client-side** and uses **simulated data** for demons
 ## Credits
 
 - Prototype designed for **demo and presentation purposes**.  
-- Simulated Copilot chatbot and predictive logic created by [Your Name / Team].  
+- Simulated Copilot chatbot and predictive logic created by Prachi Aswani.  
